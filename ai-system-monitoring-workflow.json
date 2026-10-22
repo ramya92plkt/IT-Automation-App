@@ -1,0 +1,277 @@
+{
+  "name": "My workflow 4",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "system-check",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1248,
+        -16
+      ],
+      "id": "c62f9fc1-7f80-4301-94cd-c4b7ca5147ae",
+      "name": "Webhook",
+      "webhookId": "f127cbcc-c00a-4051-8e6e-156e2e4b1c07"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "178f76f2-8525-4d8b-8f7a-f326fe2f269c",
+              "name": "message",
+              "value": "IT Automation workflow received the system check request",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -960,
+        -16
+      ],
+      "id": "80c82337-0512-456d-95ce-71400fc6ea53",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "0911961a-3268-4f9c-8d52-4884e8f52952",
+              "leftValue": "={{ $json.body.cpu_usage }}",
+              "rightValue": 40,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            },
+            {
+              "id": "23d53f31-375e-4895-a6a4-18524e1a18eb",
+              "leftValue": "={{ $json.body.memory_usage }}",
+              "rightValue": 40,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {
+          "ignoreCase": false
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -720,
+        -16
+      ],
+      "id": "01307b34-aa91-427e-a6ad-94f3565151a9",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1daf34af-7469-4cb8-9320-6ca8c2df38c3",
+              "name": "alert",
+              "value": "={{ $json.body.cpu_usage > 80 ? \"🚨 High CPU Usage: \" + $json.body.cpu_usage + \"%\" : \"🚨 High Memory Usage: \" + $json.body.memory_usage + \"%\" }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -480,
+        -144
+      ],
+      "id": "c14e82b9-74bf-43b9-9e01-84fe9b541ba9",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1af47294-15d9-42c3-9e16-63368ce01bd3",
+              "name": "status",
+              "value": "system normal",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -480,
+        128
+      ],
+      "id": "67815e33-45c4-43e7-8152-6e039a8a6e00",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ \"Analyze this IT monitoring alert: \" + $json.alert + \". Provide: 1. Issue detected, 2. Possible reason, 3. Recommended actions, 4. Priority (Low, Medium, or High). Keep the response simple and concise for an IT support team.\" }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -288,
+        -96
+      ],
+      "id": "7195ebf8-6dbd-48ce-80ad-517a47093c0e",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "llama3.2:latest",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        144
+      ],
+      "id": "0d584dfa-71a4-413f-a968-fcdd8a95b15d",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "h2qRrY7dqEjyg5SF",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "enableResponseOutput": true,
+        "respondWith": "json",
+        "responseBody": "={{ { \"ai_analysis\": $json.output } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        64,
+        -96
+      ],
+      "id": "608b8926-e3f8-435f-9911-297c38c04fa0",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "c31c08fc-261f-4c15-a7a3-996fbd14c783",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0852eb46b0d357c6bed7fccaf8011917034df085da72dd4bff3e004f2ca06285"
+  },
+  "nodeGroups": [],
+  "id": "edOnJpxdlUFo3bIz",
+  "tags": []
+}
